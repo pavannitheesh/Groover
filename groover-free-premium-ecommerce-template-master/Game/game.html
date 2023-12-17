@@ -21,6 +21,9 @@
   <center>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
     <h2 id="cartCounter">Cart: 0</h2>
+    <h2>HighScore :
+        <span id="high">0</span>
+    </h2>
   </center>
   <script>
     const canvas = document.getElementById('gameCanvas');
@@ -36,6 +39,7 @@
     const items = [];
     let cartCount = 0;
     let itemSpeed = 2; // Initial speed
+    let HighScore = 0;
 
     const brandImages = {
       'BrandA': 'brandA.png',
@@ -107,9 +111,11 @@
           break; // Exit the loop after clicking the first item
         } else if (distance < handRadius + bombRadius && items[i].type === 'bomb') {
           // Clicked on a bomb, end the game
+          HighScore = Math.max(HighScore, cartCount);
           alert('Game over! You clicked on a bomb.');
           resetGame();
         }
+        document.getElementById("high").innerHTML = HighScore;
       }
     }
 
@@ -143,14 +149,7 @@
       }
 
       // Increase speed over time
-      itemSpeed += 0.001;
-
-      // Remove items that are off-screen
-      items.forEach((item, index) => {
-        if (item.x + (item.type === 'package' ? packageRadius : bombRadius) < 0) {
-          items.splice(index, 1);
-        }
-      });
+      itemSpeed += 0.003;
 
       requestAnimationFrame(draw);
     }
