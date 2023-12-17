@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      margin-top: 100px;
+    }
+
+    canvas {
+      display: block;
+      border: 1px solid black;
+    }
+  </style>
+  <title>Brand Catcher</title>
+</head>
+<body>
+  <center>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <h2 id="cartCounter">Cart: 0</h2>
+  </center>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const cartCounter = document.getElementById('cartCounter');
+
+    let handRadius = 50;
+    let handX = canvas.width / 2;
+    let handY = canvas.height / 2;
+
+    const packageRadius = 30;
+    const bombRadius = 30;
+    const items = [];
+    let cartCount = 0;
+    let itemSpeed = 2; // Initial speed
+
+    const brandImages = {
+      'BrandA': 'brandA.png',
+      'BrandB': 'brandB.png',
+      'BrandC': 'brandC.png',
+    };
+
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      handX = e.clientX - rect.left;
+      handY = e.clientY - rect.top;
+    });
+
+    canvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      checkItemGrab();
+    });
+
+    canvas.addEventListener('click', () => {
+      checkBrandClick();
+    });
+
+    function spawnItem() {
+      const itemType = Math.random() < 0.8 ? 'package' : 'bomb';
+      const brandKeys = Object.keys(brandImages);
+      const randomBrand = brandKeys[Math.floor(Math.random() * brandKeys.length)];
+      const item = {
+        x: canvas.width + (itemType === 'package' ? packageRadius : bombRadius),
+        y: Math.random() * canvas.height,
+        type: itemType,
+        brand: randomBrand,
+      };
+      items.push(item);
+    }
+
+    function checkItemGrab() {
+      for (let i = 0; i < items.length; i++) {
+        const dx = handX - items[i].x;
+        const dy = handY - items[i].y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < handRadius + (items[i].type === 'package' ? packageRadius : bombRadius)) {
+          if (items[i].type === 'bomb') {
+            alert('Game over! You clicked on a bomb.');
+            resetGame();
+          } else {
+            alert(`You grabbed a ${items[i].brand} package!`);
+          }
+          // Remove the grabbed item from the array
+          items.splice(i, 1);
+          break; // Exit the loop after grabbing the first item
+        }
+      }
+    }
+
+    function checkBrandClick() {
+      for (let i = 0; i < items.length; i++) {
+        const dx = handX - items[i].x;
+        const dy = handY - items[i].y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < handRadius + packageRadius && items[i].type === 'package') {
+          // Clicked on a brand, increase the cart counter
+          cartCount++;
+          cartCounter.innerText = `Cart: ${cartCount}`;
+
+          // Remove the clicked item from the array
+          items.splice(i, 1);
+          break; // Exit the loop after clicking the first item
+        } else if (distance < handRadius + bombRadius && items[i].type === 'bomb') {
+          // Clicked on a bomb, end the game
+          alert('Game over! You clicked on a bomb.');
+          resetGame();
+        }
+      }
+    }
+
+    function resetGame() {
+      items.length = 0; // Clear the items array
+      cartCount = 0; // Reset the cart counter
+      cartCounter.innerText = 'Cart: 0';
+      itemSpeed = 2; // Reset the item speed
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw hand
+      const handImage = new Image();
+      handImage.src = 'hand.png';
+      ctx.drawImage(handImage, handX - handRadius, handY - handRadius, handRadius * 2, handRadius * 2);
+
+      // Spawn items
+      if (Math.random() < 0.02) {
+        spawnItem();
+      }
+
+      // Draw items
+      for (let i = 0; i < items.length; i++) {
+        const itemImage = new Image();
+        itemImage.src = items[i].type === 'package' ? brandImages[items[i].brand] : 'bomb.jpg';
+        const itemRadius = items[i].type === 'package' ? packageRadius : bombRadius;
+        ctx.drawImage(itemImage, items[i].x - itemRadius, items[i].y - itemRadius, itemRadius * 2, itemRadius * 2);
+        items[i].x -= itemSpeed; // Adjust the speed of items by changing this value
+      }
+
+      // Increase speed over time
+      itemSpeed += 0.001;
+
+      // Remove items that are off-screen
+      items.forEach((item, index) => {
+        if (item.x + (item.type === 'package' ? packageRadius : bombRadius) < 0) {
+          items.splice(index, 1);
+        }
+      });
+
+      requestAnimationFrame(draw);
+    }
+
+    draw(); // Start the game loop
+  </script>
+</body>
+</html>
